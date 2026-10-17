@@ -71,6 +71,6 @@ tests/                зеркалит src/
 
 ### Деплой
 
-Workflow `.github/workflows/ci.yml` прогоняет проверки на каждый push, а с ветки `main`
+Workflow `.github/workflows/ci.yml` прогоняет проверки на каждый push, а с основной ветки (`master`)
 публикует `dist/` на GitHub Pages (`configure-pages` пытается включить Pages сам; если не вышло —
 в настройках репозитория: Pages → Source → GitHub Actions).
