@@ -1,0 +1,415 @@
+:root {
+  --scale: 3;
+  --bg: #07060c;
+  --fg: #f1efe6;
+  --accent: #f4d35e;
+  --danger: #d33b2c;
+  --ok: #7a8a4c;
+  --warn: #f08a2c;
+  --panel: rgba(11, 10, 18, 0.6);
+  --btn: rgba(29, 22, 48, 0.85);
+  --side: 120px;
+  --below: 130px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ---------- Layout: canvas + touch pads ---------- */
+
+#root {
+  position: relative;
+  display: grid;
+  grid-template-areas: 'stage';
+  align-items: center;
+}
+
+#stage {
+  grid-area: stage;
+  position: relative;
+  width: calc(320px * var(--scale));
+  height: calc(180px * var(--scale));
+  /* Never smaller than 8px so text stays readable on phones. */
+  font-size: max(8px, calc(4px * var(--scale)));
+}
+
+.touch-pad {
+  display: none;
+}
+
+/* Portrait: game centred in the free space, buttons at the bottom under the thumbs. */
+#root[data-controls='below'] {
+  width: 100%;
+  height: 100%;
+  grid-template-areas:
+    'stage stage'
+    'left right';
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr var(--below);
+}
+
+#root[data-controls='below'] #stage {
+  justify-self: center;
+}
+
+.rotate-hint {
+  display: none;
+}
+
+#root[data-controls='below'] .rotate-hint {
+  display: block;
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--warn);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+#root[data-controls='sides'] {
+  grid-template-areas: 'left stage right';
+  grid-template-columns: var(--side) auto var(--side);
+}
+
+#root:not([data-controls='none']) .touch-pad {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+.touch-pad.left {
+  grid-area: left;
+  align-items: flex-end;
+}
+
+.touch-pad.right {
+  grid-area: right;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+#root[data-controls='below'] .touch-pad {
+  align-self: stretch;
+}
+
+#root[data-controls='below'] .touch-pad.left .move {
+  flex: 1;
+}
+
+#root[data-controls='sides'] .touch-pad {
+  align-self: end;
+  padding-bottom: 12px;
+}
+
+#root[data-controls='sides'] .pad-btn.move {
+  width: 48px;
+  min-width: 0;
+}
+
+#root[data-controls='overlay'] .touch-pad {
+  position: absolute;
+  bottom: 0;
+  z-index: 2;
+  opacity: 0.7;
+}
+
+#root[data-controls='overlay'] .touch-pad.left {
+  left: 0;
+}
+
+#root[data-controls='overlay'] .touch-pad.right {
+  right: 0;
+  width: 150px;
+}
+
+.pad-row {
+  display: flex;
+  gap: 6px;
+}
+
+.pad-btn {
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--btn);
+  border: 3px solid var(--fg);
+  border-radius: 0;
+  box-shadow: 3px 3px 0 #000;
+  touch-action: none;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.pad-btn:active,
+.pad-btn.pressed {
+  background: #4a2347;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.pad-btn.move {
+  width: 52px;
+  height: 64px;
+  font-size: 18px;
+}
+
+.pad-btn.small {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  font-size: 12px;
+  padding: 0;
+}
+
+.pad-btn.rocket {
+  min-height: 56px;
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.pad-btn[hidden] {
+  display: none;
+}
+
+/* ---------- Canvas & HUD ---------- */
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: none;
+  touch-action: none;
+}
+
+#hud {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  gap: 1.5em;
+  align-items: center;
+  padding: 0.75em 1em;
+  pointer-events: none;
+  text-shadow: 0.25em 0.25em 0 #000;
+}
+
+#hud[hidden] {
+  display: none;
+}
+
+.hud-block {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.hud-block.right {
+  margin-left: auto;
+}
+
+.label {
+  opacity: 0.75;
+}
+
+.value {
+  color: var(--accent);
+}
+
+.value[data-low='true'] {
+  color: var(--danger);
+  animation: blink 0.6s steps(2) infinite;
+}
+
+.bar {
+  width: 10em;
+  height: 1.25em;
+  border: 0.25em solid var(--fg);
+  background: #000;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.2s steps(4);
+}
+
+.bar-fill[data-level='warn'] {
+  background: var(--warn);
+}
+
+.bar-fill[data-level='danger'] {
+  background: var(--danger);
+}
+
+/* Three little cartridges drawn with gradients. */
+.ammo-icon {
+  width: 1.4em;
+  height: 1.4em;
+  background:
+    linear-gradient(var(--accent), var(--accent)) 0 30% / 0.3em 70% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) 50% 30% / 0.3em 70% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) 100% 30% / 0.3em 70% no-repeat,
+    linear-gradient(var(--warn), var(--warn)) 0 0 / 0.3em 30% no-repeat,
+    linear-gradient(var(--warn), var(--warn)) 50% 0 / 0.3em 30% no-repeat,
+    linear-gradient(var(--warn), var(--warn)) 100% 0 / 0.3em 30% no-repeat;
+}
+
+.rockets {
+  display: inline-flex;
+  gap: 0.35em;
+  margin-left: 0.5em;
+}
+
+.rocket-slot {
+  width: 0.75em;
+  height: 1.75em;
+  border: 0.2em solid var(--fg);
+  opacity: 0.4;
+}
+
+.rocket-slot.full {
+  background: var(--danger);
+  opacity: 1;
+}
+
+.warning {
+  position: absolute;
+  top: 3.2em;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  color: var(--danger);
+  text-shadow: 0.2em 0.2em 0 #000;
+  pointer-events: none;
+  animation: blink 0.8s steps(2) infinite;
+}
+
+.warning[hidden] {
+  display: none;
+}
+
+/* ---------- Screens ---------- */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7em;
+  padding: 1em;
+  text-align: center;
+  background: var(--panel);
+  pointer-events: none;
+  line-height: 1.5;
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+.screen p,
+.screen ul {
+  margin: 0;
+}
+
+.title {
+  margin: 0 0 0.3em;
+  font-size: 4em;
+  font-weight: normal;
+  color: var(--accent);
+  text-shadow:
+    0.08em 0.08em 0 var(--danger),
+    0.16em 0.16em 0 #000;
+  letter-spacing: 0.1em;
+}
+
+h2.title {
+  font-size: 2.5em;
+}
+
+.title.danger {
+  color: var(--danger);
+  text-shadow: 0.1em 0.1em 0 #000;
+}
+
+.subtitle {
+  color: var(--warn);
+}
+
+.controls {
+  list-style: none;
+  padding: 0;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.controls .accent {
+  color: var(--warn);
+  margin-top: 0.4em;
+}
+
+.controls b,
+.screen b {
+  color: var(--accent);
+  font-weight: normal;
+}
+
+.best {
+  color: var(--accent);
+}
+
+.record {
+  color: var(--danger);
+  animation: blink 0.5s steps(2) infinite;
+}
+
+.hint {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.blink {
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

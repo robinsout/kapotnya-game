@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Капотня — пиксельная браузерная игра: защити нефтезавод от дронов." />
+    <meta name="theme-color" content="#07060c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Капотня</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%23120d24'/%3E%3Crect x='3' y='7' width='10' height='9' fill='%237d8597'/%3E%3Crect x='3' y='10' width='10' height='1' fill='%23d33b2c'/%3E%3Crect x='7' y='2' width='2' height='5' fill='%23f08a2c'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root" data-controls="none">
+      <p class="rotate-hint">↻ Поверни телефон — так экран больше</p>
+      <div class="touch-pad left">
+        <button type="button" class="pad-btn move" data-action="left" aria-label="Влево">◀</button>
+        <button type="button" class="pad-btn move" data-action="right" aria-label="Вправо">▶</button>
+      </div>
+
+      <main id="stage">
+        <canvas id="game" width="320" height="180" aria-label="Игровое поле"></canvas>
+
+        <div id="hud" hidden>
+          <div class="hud-block">
+            <span class="label">ЗАВОД</span>
+            <div class="bar"><div id="hp-fill" class="bar-fill"></div></div>
+          </div>
+          <div class="hud-block">
+            <span class="ammo-icon" aria-label="Патроны"></span>
+            <span id="ammo" class="value">0</span>
+            <span id="rockets" class="rockets" aria-label="Ракеты"></span>
+          </div>
+          <div class="hud-block right">
+            <span id="score" class="value">000000</span>
+          </div>
+        </div>
+        <p id="warning" class="warning" hidden></p>
+
+        <section id="screen" class="screen"></section>
+      </main>
+
+      <div class="touch-pad right">
+        <div class="pad-row">
+          <button type="button" class="pad-btn small" data-command="pause" aria-label="Пауза">❚❚</button>
+          <button type="button" class="pad-btn small" data-command="mute" aria-label="Звук">♪</button>
+          <button type="button" class="pad-btn small" data-command="fullscreen" aria-label="Во весь экран">⛶</button>
+        </div>
+        <button type="button" class="pad-btn rocket" data-action="rocket">РАКЕТА</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
