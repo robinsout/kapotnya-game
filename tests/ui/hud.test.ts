@@ -2,19 +2,28 @@
 import { REFINERY, TURRET } from '../../src/config';
 import { createGameState } from '../../src/game/state';
 import type { HudElements, HudExtras } from '../../src/ui/hud';
-import { Hud, screenHtml } from '../../src/ui/hud';
+import { Hud, resourceWarning, screenHtml } from '../../src/ui/hud';
 
 const extras = (overrides: Partial<HudExtras> = {}): HudExtras => ({
   best: 0,
   newRecord: false,
   paused: false,
   muted: false,
+  touch: false,
   ...overrides,
 });
 
 const elements = (): HudElements => {
   const make = () => document.createElement('div');
-  return { root: make(), hpFill: make(), score: make(), ammo: make(), rockets: make(), screen: make() };
+  return {
+    root: make(),
+    hpFill: make(),
+    score: make(),
+    ammo: make(),
+    rockets: make(),
+    warning: make(),
+    screen: make(),
+  };
 };
 
 describe('Hud', () => {
@@ -44,6 +53,8 @@ describe('Hud', () => {
     expect(el.ammo.dataset.low).toBe('true');
     expect(el.rockets.children).toHaveLength(TURRET.maxRockets);
     expect(el.rockets.querySelectorAll('.full')).toHaveLength(2);
+    expect(el.warning.hidden).toBe(false);
+    expect(el.warning.textContent).toBe('МАЛО ПАТРОНОВ');
   });
 
   it('does not touch the DOM when nothing changed', () => {
@@ -81,5 +92,37 @@ describe('screenHtml', () => {
     const state = createGameState('title');
     expect(screenHtml(state, extras())).not.toContain('Рекорд');
     expect(screenHtml(state, extras({ best: 50 }))).toContain('000050');
+  });
+});
+
+describe('resourceWarning', () => {
+  it('stays quiet with enough ammo or outside of play', () => {
+    expect(resourceWarning(createGameState('playing'))).toBe('');
+    const over = createGameState('over');
+    over.turret.ammo = 0;
+    expect(resourceWarning(over)).toBe('');
+  });
+
+  it('escalates as ammo and rockets run out', () => {
+    const state = createGameState('playing');
+    state.turret.ammo = 3;
+    expect(resourceWarning(state)).toBe('МАЛО ПАТРОНОВ');
+    state.turret.ammo = 0;
+    expect(resourceWarning(state)).toContain('ПАТРОНЫ КОНЧИЛИСЬ');
+    state.turret.rockets = 0;
+    expect(resourceWarning(state)).toContain('ПУСТО');
+  });
+});
+
+describe('screenHtml hints', () => {
+  it('reminds that resources are finite', () => {
+    expect(screenHtml(createGameState('title'), extras())).toContain('не бесконечны');
+  });
+
+  it('shows touch hints on touch devices', () => {
+    const html = screenHtml(createGameState('title'), extras({ touch: true }));
+    expect(html).toContain('Коснись экрана');
+    expect(html).not.toContain('ENTER');
+    expect(screenHtml(createGameState('over'), extras({ touch: true }))).toContain('Коснись');
   });
 });

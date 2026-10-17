@@ -1,9 +1,10 @@
 import { PICKUPS, WORLD } from '../config';
 import type { Vec2 } from '../core/math';
 import { muzzlePosition, turretPivot } from '../game/systems/turret';
-import type { Drone, GameState, Particle, Pickup } from '../game/types';
+import type { Drone, Floater, GameState, Particle, Pickup } from '../game/types';
 import { renderBackground } from './background';
 import { PixelCanvas } from './canvas';
+import { textWidth } from './pixelFont';
 import { COLORS } from './palette';
 import { AVIATION_LIGHTS, FLARE_TIP, LID_SPRITE, renderRefinery } from './refineryArt';
 import {
@@ -63,6 +64,7 @@ export class Renderer {
     }
     this.drawTurret(state);
     state.particles.forEach((p) => this.drawParticle(p));
+    state.floaters.forEach((f) => this.drawFloater(f));
     ctx.restore();
 
     if (state.phase === 'playing') this.drawCrosshair(aim);
@@ -161,6 +163,14 @@ export class Renderer {
       return;
     }
     this.pc.rect(p.pos.x, p.pos.y, p.size, p.size, color);
+  }
+
+  private drawFloater(floater: Floater): void {
+    const color = floater.kind === 'ammo' ? COLORS.yellow : COLORS.red;
+    const icon = floater.kind === 'ammo' ? AMMO_CRATE : ROCKET_CRATE;
+    const text = `+${floater.amount}`;
+    this.pc.text(text, floater.pos.x - 3, floater.pos.y, color, COLORS.black);
+    this.pc.spriteCentered(icon, floater.pos.x + textWidth(text) / 2 + 2, floater.pos.y + 2);
   }
 
   private drawCrosshair(aim: Vec2): void {

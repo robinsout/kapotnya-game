@@ -1,12 +1,30 @@
 import { PICKUPS, TURRET } from '../../src/config';
-import { PICKUP_REST_Y, applyPickup, maybeDropPickup, rollLoot, updatePickups } from '../../src/game/systems/pickups';
+import {
+  PICKUP_REST_Y,
+  ammoDropChance,
+  applyPickup,
+  maybeDropPickup,
+  rollLoot,
+  updateFloaters,
+  updatePickups,
+} from '../../src/game/systems/pickups';
 import { constantRng, playingState } from '../helpers';
 
 describe('pickups', () => {
+  const plentyOfAmmo = TURRET.maxAmmo;
+
   it('rolls rockets rarer than ammo', () => {
-    expect(rollLoot(constantRng(PICKUPS.rocketChance - 0.001))).toBe('rocket');
-    expect(rollLoot(constantRng(PICKUPS.rocketChance + 0.001))).toBe('ammo');
-    expect(rollLoot(constantRng(PICKUPS.rocketChance + PICKUPS.ammoChance + 0.001))).toBeNull();
+    expect(rollLoot(constantRng(PICKUPS.rocketChance - 0.001), plentyOfAmmo)).toBe('rocket');
+    expect(rollLoot(constantRng(PICKUPS.rocketChance + 0.001), plentyOfAmmo)).toBe('ammo');
+    expect(rollLoot(constantRng(PICKUPS.rocketChance + PICKUPS.ammoChance + 0.001), plentyOfAmmo)).toBeNull();
+  });
+
+  it('drops ammo more often when the player is running dry', () => {
+    expect(ammoDropChance(0)).toBe(PICKUPS.lowAmmoChance);
+    expect(ammoDropChance(plentyOfAmmo)).toBe(PICKUPS.ammoChance);
+    const roll = constantRng(PICKUPS.rocketChance + PICKUPS.ammoChance + 0.01);
+    expect(rollLoot(roll, plentyOfAmmo)).toBeNull();
+    expect(rollLoot(roll, PICKUPS.lowAmmoThreshold - 1)).toBe('ammo');
   });
 
   it('drops a crate where the drone died', () => {
@@ -43,6 +61,16 @@ describe('pickups', () => {
     expect(state.pickups).toHaveLength(0);
     expect(state.turret.ammo).toBe(10 + PICKUPS.ammoAmount);
     expect(state.events).toContain('pickup');
+    expect(state.floaters).toMatchObject([{ kind: 'ammo', amount: PICKUPS.ammoAmount }]);
+  });
+
+  it('floaters rise and fade out', () => {
+    const state = playingState();
+    state.floaters.push({ kind: 'rocket', amount: 1, pos: { x: 10, y: 100 }, life: 0.5 });
+    updateFloaters(state, 0.25);
+    expect(state.floaters[0].pos.y).toBeLessThan(100);
+    updateFloaters(state, 0.3);
+    expect(state.floaters).toHaveLength(0);
   });
 
   it('is not collected while still high in the air', () => {
@@ -56,10 +84,10 @@ describe('pickups', () => {
   it('caps ammo and rockets', () => {
     const state = playingState();
     state.turret.ammo = TURRET.maxAmmo - 1;
-    applyPickup(state, 'ammo');
+    expect(applyPickup(state, 'ammo')).toBe(1);
     expect(state.turret.ammo).toBe(TURRET.maxAmmo);
     state.turret.rockets = TURRET.maxRockets;
-    applyPickup(state, 'rocket');
+    expect(applyPickup(state, 'rocket')).toBe(0);
     expect(state.turret.rockets).toBe(TURRET.maxRockets);
   });
 });

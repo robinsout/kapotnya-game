@@ -20,6 +20,7 @@ export const createGameState = (phase: Phase = 'title'): GameState => ({
   drones: [],
   pickups: [],
   particles: [],
+  floaters: [],
   fires: [],
   collapse: null,
   spawner: { timer: SPAWNER.initialInterval / 2 },

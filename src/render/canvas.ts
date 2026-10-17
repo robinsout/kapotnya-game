@@ -1,4 +1,5 @@
 import type { Sprite } from './sprite';
+import { textPixels, textWidth } from './pixelFont';
 import { linePoints, rotatePixels } from './sprite';
 
 /** Thin pixel-perfect drawing helpers over a 2D context. */
@@ -21,6 +22,17 @@ export class PixelCanvas {
   line(x0: number, y0: number, x1: number, y1: number, color: string): void {
     this.ctx.fillStyle = color;
     for (const [x, y] of linePoints(x0, y0, x1, y1)) this.ctx.fillRect(x, y, 1, 1);
+  }
+
+  /** Tiny bitmap text centred on `cx`, with a 1px dark outline for readability. */
+  text(text: string, cx: number, y: number, color: string, outline: string): void {
+    const left = Math.round(cx - textWidth(text) / 2);
+    const top = Math.round(y);
+    const pixels = textPixels(text);
+    this.ctx.fillStyle = outline;
+    for (const [x, py] of pixels) this.ctx.fillRect(left + x - 1, top + py - 1, 3, 3);
+    this.ctx.fillStyle = color;
+    for (const [x, py] of pixels) this.ctx.fillRect(left + x, top + py, 1, 1);
   }
 
   /** Draws a sprite with its top-left corner at (x, y). */

@@ -5,7 +5,7 @@ import type { GameState, InputState } from './types';
 import { updateCollapse } from './systems/collapse';
 import { updateDrones } from './systems/drones';
 import { emitFireParticles, updateParticles } from './systems/particles';
-import { updatePickups } from './systems/pickups';
+import { updateFloaters, updatePickups } from './systems/pickups';
 import { updateBullets, updateRockets } from './systems/projectiles';
 import { updateSpawner } from './systems/spawner';
 import { updateTurret } from './systems/turret';
@@ -53,6 +53,7 @@ export const step = (state: GameState, input: InputState, dt: number, rng: Rng):
 
   emitFireParticles(state, rng, dt);
   updateParticles(state, dt);
+  updateFloaters(state, dt);
   state.shake = Math.max(0, state.shake - SHAKE_DECAY * dt);
   return state;
 };

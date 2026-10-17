@@ -62,3 +62,14 @@ describe('step', () => {
     expect(state.refineryHp).toBe(0);
   });
 });
+
+describe('finite resources', () => {
+  it('ammo and rockets never refill on their own — only from crates', () => {
+    let state = playingState();
+    const rng = constantRng(0.99); // never rolls loot
+    state = step(state, input({ rocket: true }), 1 / 60, rng);
+    for (let i = 0; i < 60 * 30; i++) state = step(state, input({ fire: true }), 1 / 60, rng);
+    expect(state.turret.ammo).toBe(0);
+    expect(state.turret.rockets).toBe(2);
+  });
+});

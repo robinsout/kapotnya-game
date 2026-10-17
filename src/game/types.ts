@@ -53,6 +53,14 @@ export interface Pickup {
   ttl: number;
 }
 
+/** "+50" style popup shown where a crate was collected. */
+export interface Floater {
+  kind: PickupKind;
+  amount: number;
+  pos: Vec2;
+  life: number;
+}
+
 export type ParticleKind = 'spark' | 'smoke' | 'fire' | 'debris' | 'flash';
 
 export interface Particle {
@@ -116,6 +124,7 @@ export interface GameState {
   drones: Drone[];
   pickups: Pickup[];
   particles: Particle[];
+  floaters: Floater[];
   fires: Fire[];
   collapse: Collapse | null;
   spawner: Spawner;

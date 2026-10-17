@@ -1,14 +1,13 @@
 import './style.css';
 import { App } from './app';
 import { SoundEngine } from './audio/soundEngine';
-import { WORLD } from './config';
 import { mathRandom } from './core/random';
 import { InputController } from './input/inputController';
-import type { Action } from './input/keymap';
 import { Renderer } from './render/renderer';
 import { HighScore, browserStorage } from './ui/highScore';
 import { Hud } from './ui/hud';
-import { computeScale } from './ui/scale';
+import { bindTouchControls, fullscreenSupported, toggleFullscreen } from './ui/touchControls';
+import { bindViewport, isTouchDevice } from './ui/viewport';
 
 const byId = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -17,53 +16,52 @@ const byId = <T extends HTMLElement>(id: string): T => {
 };
 
 const canvas = byId<HTMLCanvasElement>('game');
-const stage = byId('stage');
-
-const fitToViewport = (): void => {
-  const scale = computeScale(window.innerWidth, window.innerHeight, WORLD.width, WORLD.height);
-  stage.style.setProperty('--scale', String(scale));
-};
-fitToViewport();
-window.addEventListener('resize', fitToViewport);
+const root = byId('root');
+bindViewport(root, byId('stage'));
 
 const input = new InputController(canvas);
 input.attach();
 
 const sound = new SoundEngine();
-// Browsers only allow audio after a user gesture.
+// Browsers (iOS especially) only allow audio after a user gesture.
 const unlockAudio = (): void => sound.unlock();
-window.addEventListener('pointerdown', unlockAudio);
-window.addEventListener('keydown', unlockAudio);
-
-document.querySelectorAll<HTMLButtonElement>('#touch [data-action]').forEach((button) => {
-  const action = button.dataset.action as Action;
-  button.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    input.press(action, true);
-  });
-  const release = (): void => input.press(action, false);
-  button.addEventListener('pointerup', release);
-  button.addEventListener('pointerleave', release);
-  button.addEventListener('pointercancel', release);
-});
-
-const hud = new Hud({
-  root: byId('hud'),
-  hpFill: byId('hp-fill'),
-  score: byId('score'),
-  ammo: byId('ammo'),
-  rockets: byId('rockets'),
-  screen: byId('screen'),
-});
+for (const type of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(type, unlockAudio);
 
 const app = new App({
   input,
   renderer: new Renderer(canvas.getContext('2d')!),
-  hud,
+  hud: new Hud({
+    root: byId('hud'),
+    hpFill: byId('hp-fill'),
+    score: byId('score'),
+    ammo: byId('ammo'),
+    rockets: byId('rockets'),
+    warning: byId('warning'),
+    screen: byId('screen'),
+  }),
   sound,
   highScore: new HighScore(browserStorage()),
   rng: mathRandom,
+  isTouch: isTouchDevice,
 });
+
+input.onCommand((command) => (command === 'mute' ? app.toggleMute() : app.togglePause()));
+
+bindTouchControls(root, {
+  press: (action, down) => input.press(action, down),
+  command: (command) => {
+    if (command === 'pause') app.togglePause();
+    else if (command === 'mute') app.toggleMute();
+    else void toggleFullscreen();
+  },
+});
+if (!fullscreenSupported()) root.querySelector<HTMLElement>('[data-command="fullscreen"]')?.setAttribute('hidden', '');
+
+// Phones lock, users switch apps — never keep playing in the background.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) app.pause();
+});
+
 app.start();
 
 if (import.meta.env.DEV) {

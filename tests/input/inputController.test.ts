@@ -1,6 +1,17 @@
 // @vitest-environment jsdom
 import { InputController } from '../../src/input/inputController';
 
+/** jsdom lacks PointerEvent, so decorate a MouseEvent with pointer fields. */
+const pointer = (
+  type: string,
+  init: MouseEventInit & { pointerId?: number; pointerType?: string } = {},
+): MouseEvent => {
+  const event = new MouseEvent(type, { cancelable: true, ...init });
+  Object.defineProperty(event, 'pointerId', { value: init.pointerId ?? 1 });
+  Object.defineProperty(event, 'pointerType', { value: init.pointerType ?? 'mouse' });
+  return event;
+};
+
 const key = (type: 'keydown' | 'keyup', code: string, repeat = false) =>
   new KeyboardEvent(type, { code, repeat, cancelable: true });
 
@@ -41,18 +52,43 @@ describe('InputController', () => {
   });
 
   it('aims and fires with the pointer', () => {
-    canvas.dispatchEvent(new MouseEvent('pointermove', { clientX: 320, clientY: 90 }));
+    canvas.dispatchEvent(pointer('pointermove', { clientX: 320, clientY: 90 }));
     expect(controller.sample().aim).toEqual({ x: 160, y: 45 });
 
-    canvas.dispatchEvent(new MouseEvent('pointerdown', { button: 0, clientX: 0, clientY: 0, cancelable: true }));
+    canvas.dispatchEvent(pointer('pointerdown', { button: 0, clientX: 0, clientY: 0 }));
     expect(controller.sample()).toMatchObject({ fire: true, start: true, rocket: false });
-    window.dispatchEvent(new MouseEvent('pointerup', { button: 0 }));
+    canvas.dispatchEvent(pointer('pointerup', { button: 0 }));
     expect(controller.sample().fire).toBe(false);
   });
 
   it('launches a rocket with the right mouse button', () => {
-    canvas.dispatchEvent(new MouseEvent('pointerdown', { button: 2, cancelable: true }));
+    canvas.dispatchEvent(pointer('pointerdown', { button: 2 }));
     expect(controller.sample()).toMatchObject({ fire: false, rocket: true });
+  });
+
+  it('tracks several fingers independently', () => {
+    canvas.dispatchEvent(pointer('pointerdown', { pointerId: 7, pointerType: 'touch' }));
+    canvas.dispatchEvent(pointer('pointerdown', { pointerId: 8, pointerType: 'touch' }));
+    canvas.dispatchEvent(pointer('pointerup', { pointerId: 7, pointerType: 'touch' }));
+    expect(controller.sample().fire).toBe(true);
+    canvas.dispatchEvent(pointer('pointercancel', { pointerId: 8, pointerType: 'touch' }));
+    expect(controller.sample().fire).toBe(false);
+  });
+
+  it('keeps firing while an on-screen button is released elsewhere', () => {
+    canvas.dispatchEvent(pointer('pointerdown', { pointerId: 3, pointerType: 'touch' }));
+    controller.press('left', true);
+    window.dispatchEvent(pointer('pointerup', { pointerId: 4, pointerType: 'touch' }));
+    controller.press('left', false);
+    expect(controller.sample().fire).toBe(true);
+  });
+
+  it('aims with a finger only while it is touching', () => {
+    canvas.dispatchEvent(pointer('pointermove', { clientX: 320, clientY: 90, pointerType: 'touch', pointerId: 5 }));
+    expect(controller.sample().aim).not.toEqual({ x: 160, y: 45 });
+    canvas.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0, pointerType: 'touch', pointerId: 5 }));
+    canvas.dispatchEvent(pointer('pointermove', { clientX: 320, clientY: 90, pointerType: 'touch', pointerId: 5 }));
+    expect(controller.sample().aim).toEqual({ x: 160, y: 45 });
   });
 
   it('notifies about pause and mute commands', () => {

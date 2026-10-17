@@ -63,11 +63,21 @@ export const SPAWNER = {
 
 export const PICKUPS = {
   ammoChance: 0.35,
+  /** Ammo drops get more likely when the player is running dry — still has to be caught. */
+  lowAmmoChance: 0.6,
+  lowAmmoThreshold: 40,
   rocketChance: 0.08,
   ammoAmount: 50,
   fallSpeed: 22,
   groundTtl: 7,
   blinkTime: 2,
+} as const;
+
+export const HUD = {
+  /** Below this the HUD warns that ammo is running out. */
+  lowAmmo: 25,
+  floaterLife: 1.2,
+  floaterRise: 18,
 } as const;
 
 export const REFINERY = {

@@ -12,7 +12,8 @@ type CommandListener = (command: 'pause' | 'mute') => void;
  */
 export class InputController {
   private readonly held = new Set<Action>();
-  private pointerFiring = false;
+  /** Pointers (mouse button or fingers) currently holding fire on the canvas. */
+  private readonly firingPointers = new Set<number>();
   private pendingRocket = false;
   private pendingStart = false;
   private readonly aim = { x: WORLD.width / 2, y: 40 };
@@ -25,9 +26,12 @@ export class InputController {
     this.listen(target, 'keydown', (e) => this.onKey(e as KeyboardEvent, true));
     this.listen(target, 'keyup', (e) => this.onKey(e as KeyboardEvent, false));
     this.listen(target, 'blur', () => this.releaseAll());
-    this.listen(this.canvas, 'pointermove', (e) => this.updateAim(e as PointerEvent));
+    this.listen(this.canvas, 'pointermove', (e) => this.onPointerMove(e as PointerEvent));
     this.listen(this.canvas, 'pointerdown', (e) => this.onPointerDown(e as PointerEvent));
-    this.listen(target, 'pointerup', (e) => this.onPointerUp(e as PointerEvent));
+    // Pointers are captured on press, so release always arrives at the canvas.
+    this.listen(this.canvas, 'pointerup', (e) => this.releasePointer(e as PointerEvent));
+    this.listen(this.canvas, 'pointercancel', (e) => this.releasePointer(e as PointerEvent));
+    this.listen(this.canvas, 'lostpointercapture', (e) => this.releasePointer(e as PointerEvent));
     this.listen(this.canvas, 'contextmenu', (e) => e.preventDefault());
   }
 
@@ -50,7 +54,7 @@ export class InputController {
     return {
       moveX: right - left,
       aim: { ...this.aim },
-      fire: this.pointerFiring || this.held.has('fire'),
+      fire: this.firingPointers.size > 0 || this.held.has('fire'),
       rocket: this.pendingRocket,
       start: this.pendingStart,
     };
@@ -99,20 +103,34 @@ export class InputController {
     this.aim.y = point.y;
   }
 
+  private onPointerMove(e: PointerEvent): void {
+    // A finger only aims while it is down; a mouse aims just by hovering.
+    if (e.pointerType === 'touch' && !this.firingPointers.has(e.pointerId)) return;
+    this.updateAim(e);
+  }
+
   private onPointerDown(e: PointerEvent): void {
     e.preventDefault();
     this.updateAim(e);
     this.pendingStart = true;
-    if (e.button === 2) this.pendingRocket = true;
-    else this.pointerFiring = true;
+    if (e.button === 2) {
+      this.pendingRocket = true;
+      return;
+    }
+    this.firingPointers.add(e.pointerId);
+    try {
+      this.canvas.setPointerCapture?.(e.pointerId);
+    } catch {
+      // Synthetic events (tests, some browsers) can't be captured — release still works.
+    }
   }
 
-  private onPointerUp(e: PointerEvent): void {
-    if (e.button !== 2) this.pointerFiring = false;
+  private releasePointer(e: PointerEvent): void {
+    this.firingPointers.delete(e.pointerId);
   }
 
   private releaseAll(): void {
     this.held.clear();
-    this.pointerFiring = false;
+    this.firingPointers.clear();
   }
 }
