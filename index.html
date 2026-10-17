@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="description" content="Капотня — пиксельная браузерная игра: защити нефтезавод от дронов." />
+    <title>Капотня</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%23120d24'/%3E%3Crect x='3' y='7' width='10' height='9' fill='%237d8597'/%3E%3Crect x='3' y='10' width='10' height='1' fill='%23d33b2c'/%3E%3Crect x='7' y='2' width='2' height='5' fill='%23f08a2c'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main id="stage">
+      <canvas id="game" width="320" height="180" aria-label="Игровое поле"></canvas>
+
+      <div id="hud" hidden>
+        <div class="hud-block">
+          <span class="label">ЗАВОД</span>
+          <div class="bar"><div id="hp-fill" class="bar-fill"></div></div>
+        </div>
+        <div class="hud-block">
+          <span class="label">ПАТРОНЫ</span>
+          <span id="ammo" class="value">0</span>
+          <span class="label">РАКЕТЫ</span>
+          <span id="rockets" class="rockets"></span>
+        </div>
+        <div class="hud-block right">
+          <span id="score" class="value">000000</span>
+        </div>
+      </div>
+
+      <section id="screen" class="screen"></section>
+
+      <div id="touch" class="touch-controls" aria-hidden="true">
+        <button type="button" data-action="left">◀</button>
+        <button type="button" data-action="right">▶</button>
+        <button type="button" data-action="rocket" class="rocket-btn">РАКЕТА</button>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,240 @@
+:root {
+  --scale: 3;
+  --bg: #07060c;
+  --fg: #f1efe6;
+  --accent: #f4d35e;
+  --danger: #d33b2c;
+  --ok: #7a8a4c;
+  --warn: #f08a2c;
+  --panel: rgba(11, 10, 18, 0.6);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Press Start 2P', ui-monospace, monospace;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+body {
+  display: grid;
+  place-items: center;
+}
+
+#stage {
+  position: relative;
+  width: calc(320px * var(--scale));
+  height: calc(180px * var(--scale));
+  font-size: calc(4px * var(--scale));
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: none;
+}
+
+#hud {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  gap: 2em;
+  align-items: center;
+  padding: 1em 1.5em;
+  pointer-events: none;
+  text-shadow: 0.25em 0.25em 0 #000;
+}
+
+#hud[hidden] {
+  display: none;
+}
+
+.hud-block {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+}
+
+.hud-block.right {
+  margin-left: auto;
+}
+
+.label {
+  opacity: 0.75;
+}
+
+.value {
+  color: var(--accent);
+}
+
+.value[data-low='true'] {
+  color: var(--danger);
+  animation: blink 0.6s steps(2) infinite;
+}
+
+.bar {
+  width: 14em;
+  height: 1.25em;
+  border: 0.25em solid var(--fg);
+  background: #000;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.2s steps(4);
+}
+
+.bar-fill[data-level='warn'] {
+  background: var(--warn);
+}
+
+.bar-fill[data-level='danger'] {
+  background: var(--danger);
+}
+
+.rockets {
+  display: inline-flex;
+  gap: 0.4em;
+}
+
+.rocket-slot {
+  width: 0.75em;
+  height: 2em;
+  border: 0.2em solid var(--fg);
+  opacity: 0.4;
+}
+
+.rocket-slot.full {
+  background: var(--danger);
+  opacity: 1;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  padding: 2em;
+  text-align: center;
+  background: var(--panel);
+  pointer-events: none;
+  line-height: 1.6;
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+.screen p,
+.screen ul {
+  margin: 0;
+}
+
+.title {
+  margin: 0 0 0.5em;
+  font-size: 4em;
+  font-weight: normal;
+  color: var(--accent);
+  text-shadow:
+    0.08em 0.08em 0 var(--danger),
+    0.16em 0.16em 0 #000;
+  letter-spacing: 0.1em;
+}
+
+h2.title {
+  font-size: 2.5em;
+}
+
+.title.danger {
+  color: var(--danger);
+  text-shadow: 0.1em 0.1em 0 #000;
+}
+
+.subtitle {
+  color: var(--warn);
+}
+
+.controls {
+  list-style: none;
+  padding: 0;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.controls b,
+.screen b {
+  color: var(--accent);
+  font-weight: normal;
+}
+
+.best {
+  color: var(--accent);
+}
+
+.record {
+  color: var(--danger);
+  animation: blink 0.5s steps(2) infinite;
+}
+
+.hint {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.blink {
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.touch-controls {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: flex;
+    gap: 1em;
+    padding: 1em;
+    pointer-events: none;
+  }
+
+  .touch-controls button {
+    pointer-events: auto;
+    font: inherit;
+    font-size: 1.5em;
+    color: var(--fg);
+    background: var(--panel);
+    border: 0.15em solid var(--fg);
+    padding: 0.6em 1em;
+    touch-action: none;
+  }
+
+  .touch-controls .rocket-btn {
+    margin-left: auto;
+    color: var(--danger);
+  }
+}
